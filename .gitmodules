@@ -1,0 +1,15 @@
+[submodule "growly-eureka-server"]
+	path = growly-eureka-server
+	url = git@github.com:LPF-24/growly-eureka-server.git
+[submodule "growly-api-gateway"]
+	path = growly-api-gateway
+	url = git@github.com:LPF-24/growly-api-gateway.git
+[submodule "growly-auth-service"]
+	path = growly-auth-service
+	url = git@github.com:LPF-24/growly-auth-service.git
+[submodule "growly-habit-service"]
+	path = growly-habit-service
+	url = git@github.com:LPF-24/growly-habit-service.git
+[submodule "growly-notification-service"]
+	path = growly-notification-service
+	url = git@github.com:LPF-24/growly-notification-service.git
