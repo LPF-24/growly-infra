@@ -1,0 +1,135 @@
+services:
+  auth-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth_db
+    ports:
+      - "5433:5432" # другой порт снаружи
+    networks:
+      - growly
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+
+  habit-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: habit_db
+    ports:
+      - "5434:5432" # другой порт снаружи
+    networks:
+      - growly
+    volumes:
+      - habit_data:/var/lib/postgresql/data
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - growly
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    networks:
+      - growly
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
+  eureka-server:
+    build: ../growly-eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - growly
+
+  api-gateway:
+    build: ../growly-api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - growly
+    depends_on:
+      - eureka-server
+
+  auth-service:
+    build: ../growly-auth-service
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    networks:
+      - growly
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - auth-db
+      - eureka-server
+      - kafka
+
+  habit-service:
+    build: ../growly-habit-service
+    container_name: habit-service
+    ports:
+      - "8082:8082"
+    networks:
+      - growly
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://habit-db:5432/habit_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - habit-db
+      - eureka-server
+      - kafka
+
+  habit-ui:
+    build:
+      context: ../growly-habit-ui
+    ports:
+      - "5173:80" # Маппинг 5173 на nginx:80
+    container_name: habit-ui
+    networks:
+      - growly
+
+  notification-service:
+    build: ../growly-notification-service
+    container_name: notification-service
+    ports:
+      - "8083:8083"
+    networks:
+      - growly
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - kafka
+      - eureka-server
+
+volumes:
+  auth_data:
+  habit_data:
+
+networks:
+  growly:
+    driver: bridge
