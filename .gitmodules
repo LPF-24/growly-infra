@@ -13,3 +13,6 @@
 [submodule "growly-notification-service"]
 	path = growly-notification-service
 	url = git@github.com:LPF-24/growly-notification-service.git
+[submodule "growly-habit-ui"]
+	path = growly-habit-ui
+	url = git@github.com:LPF-24/growly-habit-ui.git
