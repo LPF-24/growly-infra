@@ -52,6 +52,14 @@ services:
     depends_on:
       - zookeeper
 
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - growly
+
   eureka-server:
     build: ../growly-eureka-server
     container_name: eureka-server
@@ -86,6 +94,7 @@ services:
       - auth-db
       - eureka-server
       - kafka
+      - redis
 
   habit-service:
     build: ../growly-habit-service
