@@ -6,6 +6,7 @@
     <mapping directory="$PROJECT_DIR$/growly-auth-service" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/growly-eureka-server" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/growly-habit-service" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/growly-habit-ui" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/growly-notification-service" vcs="Git" />
   </component>
 </project>
