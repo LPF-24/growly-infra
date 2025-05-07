@@ -122,6 +122,15 @@ services:
     networks:
       - growly
 
+  auth-ui:
+    build:
+      context: ../growly-auth-ui
+    ports:
+      - "5174:80"
+    container_name: auth-ui
+    networks:
+      - growly
+
   notification-service:
     build: ../growly-notification-service
     container_name: notification-service
