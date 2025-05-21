@@ -113,21 +113,12 @@ services:
       - eureka-server
       - kafka
 
-  habit-ui:
+  main-ui:
     build:
-      context: ../growly-habit-ui
+      context: ../growly-main-ui
     ports:
-      - "5173:80" # Маппинг 5173 на nginx:80
-    container_name: habit-ui
-    networks:
-      - growly
-
-  auth-ui:
-    build:
-      context: ../growly-auth-ui
-    ports:
-      - "5174:80"
-    container_name: auth-ui
+      - "5173:80"
+    container_name: main-ui
     dns:
       - 8.8.8.8
       - 1.1.1.1
