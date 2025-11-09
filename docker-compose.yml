@@ -1,29 +1,45 @@
+version: "3.9"
+
 services:
   auth-db:
     image: postgres:15
+    container_name: auth-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: auth_db
     ports:
-      - "5433:5432" # другой порт снаружи
+      - "5433:5432"
     networks:
       - growly
     volumes:
       - auth_data:/var/lib/postgresql/data
+      - ../growly-auth-service/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
 
   habit-db:
     image: postgres:15
+    container_name: habit-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: habit_db
     ports:
-      - "5434:5432" # другой порт снаружи
+      - "5434:5432"
     networks:
       - growly
     volumes:
       - habit_data:/var/lib/postgresql/data
+      - ../growly-habit-service/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d habit_db"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -53,12 +69,18 @@ services:
       - zookeeper
 
   redis:
-    image: redis:latest
-    restart: always
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     networks:
       - growly
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
 
   eureka-server:
     build: ../growly-eureka-server
@@ -91,22 +113,24 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
-      # --- seeding credentials ---
       ADMIN_USERNAME: admin
       ADMIN_EMAIL: admin@example.com
       ADMIN_PASSWORD: ChangeMe_123!
       USER_USERNAME: user
       USER_EMAIL: user@example.com
       USER_PASSWORD: user123!
-      # опционально разово сбросить пароли существующим записям:
       # ADMIN_RESET_PASSWORD: "true"
       # USER_RESET_PASSWORD: "true"
 
     depends_on:
-      - auth-db
-      - eureka-server
-      - kafka
-      - redis
+      auth-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      kafka:
+        condition: service_started
+      redis:
+        condition: service_healthy
 
   habit-service:
     build: ../growly-habit-service
@@ -121,21 +145,12 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
-      - habit-db
-      - eureka-server
-      - kafka
-
-  main-ui:
-    build:
-      context: ../growly-main-ui
-    ports:
-      - "5173:80"
-    container_name: main-ui
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
-    networks:
-      - growly
+      habit-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      kafka:
+        condition: service_started
 
   notification-service:
     build: ../growly-notification-service
@@ -147,8 +162,24 @@ services:
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
-      - kafka
-      - eureka-server
+      kafka:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+
+  main-ui:
+    build:
+      context: ../growly-main-ui
+    container_name: main-ui
+    ports:
+      - "5173:80"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    networks:
+      - growly
+    depends_on:
+      - api-gateway
 
 volumes:
   auth_data:

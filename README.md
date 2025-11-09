@@ -22,7 +22,7 @@ Infrastructure services:
 ## 🐳 Running the Stack with Docker Compose
 
 ```bash
-docker compose up --build -d
+docker compose up -d --build 
 ```
 
 ## 👥 Sample Accounts (http://localhost:5173/login)
